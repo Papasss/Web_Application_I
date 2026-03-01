@@ -1,0 +1,23 @@
+{
+  "name": "esercizio1",
+  "version": "1.0.0",
+  "description": "\u0000 \u0000",
+  "homepage": "https://github.com/Papasss/Web_Application_I#readme",
+  "bugs": {
+    "url": "https://github.com/Papasss/Web_Application_I/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Papasss/Web_Application_I.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "exercises.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.19"
+  }
+}
