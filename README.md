@@ -23,3 +23,7 @@ Assicurati di avere [Node.js](https://nodejs.org/) installato.
 1. Clona il repository sul tuo computer:
    ```bash
    git clone [https://github.com/Papasss/Web_Application_I.git)
+
+## ⚠️ Attenzione
+
+Progetto individuale, non necessaria creazione di branch.
