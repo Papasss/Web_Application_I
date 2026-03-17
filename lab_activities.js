@@ -1,6 +1,11 @@
 "use strict";
 
 import dayjs from "dayjs";
+import sqlite from "sqlite3";
+
+const db = new sqlite.Database("films.db", (err) => {
+  if (err) throw err;
+})
 
 function Film (id, title, fav=false, date, rating, user_id=1) {
   this.id = id;
@@ -33,6 +38,21 @@ function FilmLibrary (text) {
 
   }
 
+  this.getAllFilms = () => {
+    return new Promise((resolve, reject) => {
+      const sql = "SELECT films.* from films";
+      const films = [];
+      db.all(sql, [], (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          films.push(rows);
+          resolve(films);
+        }
+      });
+    });
+  }
+
 }
 
 const film1 = new Film(1, 'Chi trova un amico trova un tesoro', true, dayjs('2019-12-27T16:00'), 4, 2);
@@ -47,5 +67,12 @@ library.addFilm(film2);
 library.addFilm(film3);
 library.addFilm(film4);
 
-library.toString();
+const library_db = new FilmLibrary("Libreria dei film da database");
+
+console.log(await library_db.getAllFilms());
+
+//library.toString();
+// console.log(library.getAllFilms())
+
+
 
