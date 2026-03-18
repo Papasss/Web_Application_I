@@ -14,7 +14,8 @@ Libreria in JavaScript per gestire la tua collezione personale di film. Permette
 ## ✨ Funzionalità
 
 - **Architettura a Oggetti:** Basato su costruttori `Film` e `FilmLibrary` per una gestione modulare.
-- to be
+- **Feature aggiuntive:** `SQLite Viewer`, `REST Client`, `Express`
+- **Database:** `films.db`
 
 ## 🚀 Installazione
 
@@ -26,4 +27,4 @@ Assicurati di avere [Node.js](https://nodejs.org/) installato.
 
 ## ⚠️ Attenzione
 
-Progetto individuale, non necessaria creazione di branch.
+Progetto individuale, non necessaria creazione di branch se non per gestire singole feature.
