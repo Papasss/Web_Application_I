@@ -112,6 +112,34 @@ function FilmLibrary (text) {
     });
   }
 
+  this.deleteFilm = (film) => {
+    return new Promise((resolve, reject) => {
+      const sql = "DELETE FROM films WHERE films.id = ?";
+      db.run(sql, [film.id], function(err) {
+        if(err) {
+          console.log("errore di cancellazione del film");
+          reject (err);
+        } else {
+          resolve("film cancellato correttamente");
+        }
+      });
+    });
+  }
+
+  this.deleteWatchDate = (null_val) => {
+    return new Promise((resolve, reject) => {
+      const sql = "UPDATE films SET watchDate=?";
+      db.run(sql, [null_val], function(err) {
+        if(err) {
+          console.log("errore di cancellazione dati della colonna watchDate");
+          reject (err);
+        } else {
+          resolve("cancellati correttamente i dati della colonna watchDate");
+        }
+      });
+    });
+  }
+
 }
 
 const film1 = new Film(6, 'Chi trova un amico trova un tesoro', 1, 4, dayjs('2019-12-27T16:00'), 3);
@@ -134,11 +162,15 @@ async function main() {
   
   const date = dayjs('2026-03-11')
   const film_name = '21'
+  const val = null
   // console.log(await library_db.getAllFilms());
   // console.log(await library_db.getFavFilms());
   // console.log(await library_db.getBeforeDateFilms(date));
   // console.log(await library_db.getNameFilms(film_name));
-  console.log(await library_db.insertFilm(film1));
+  // console.log(await library_db.insertFilm(film2));
+  // console.log(await library_db.deleteFilm(film1));
+  console.log(await library_db.deleteWatchDate(val));
+
 }
 
 main();
