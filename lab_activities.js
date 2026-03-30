@@ -2,10 +2,13 @@
 
 import dayjs from "dayjs";
 import sqlite from "sqlite3";
+import express from "express";
 
 const db = new sqlite.Database("films.db", (err) => {
   if (err) throw err;
 })
+
+const app = express();
 
 function Film (id, title, fav=0, rating, date, user_id=1) {
   this.id = id;
