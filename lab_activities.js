@@ -2,15 +2,27 @@
 
 import dayjs from "dayjs";
 import sqlite from "sqlite3";
-import express from "express";
 
 const db = new sqlite.Database("films.db", (err) => {
   if (err) throw err;
 })
 
-const app = express();
+const filters = {
+    'filter-favorite': {label: 'Favorites', filterFunction: film => film.favorite},
+    'filter-best': {label: 'Best Rated', filterFunction: film => film.rating >= 5},
+    'filter-lastmonth': {label: 'Seen Last Month', filterFunction: film => isSeenLastMonth(film)},
+    'filter-unseen': {label: 'Unseen', filterFunction: film => !film.watchDate}
+};
 
-function Film (id, title, fav=0, rating, date, user_id=1) {
+const isSeenLastMonth = (film) => {
+    if ('watchDate' in film && film.watchDate) {  // Accessing watchDate only if defined
+        const diff = film.watchDate.diff(dayjs(), 'month');
+        const isLastMonth = diff <= 0 && diff > -1;      // last month
+        return isLastMonth;
+    }
+};
+
+export function Film (id, title, fav=0, rating, date, user_id=1) {
   this.id = id;
   this.title = title;
   this.fav = fav;
@@ -19,7 +31,7 @@ function Film (id, title, fav=0, rating, date, user_id=1) {
   this.user_id = user_id;
 }
 
-function FilmLibrary (text) {
+export function FilmLibrary (text) {
   this.text = text
   this.library = [];
 
@@ -41,11 +53,31 @@ function FilmLibrary (text) {
 
   }
 
-  this.getAllFilms = () => {
+  this.getAllFilms = (filter) => {
     return new Promise((resolve, reject) => {
       const sql = "SELECT films.* from films";
       const films = [];
-      db.all(sql, [], (err, rows) => {
+      db.all(sql, (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          films.push(rows);
+
+          if (filters.hasOwnProperty(filter)) {
+            resolve(films.filter(filters[filter].filterFunction))
+          } else {
+            resolve(films);
+          }
+        }
+      });
+    });
+  }
+
+  this.getIdFilms = (id_film) => {
+    return new Promise((resolve, reject) => {
+      const sql = "SELECT films.* from films WHERE films.id = ?";
+      const films = [];
+      db.all(sql, [id_film], (err, rows) => {
         if (err) {
           reject(err);
         } else {
@@ -115,6 +147,20 @@ function FilmLibrary (text) {
     });
   }
 
+  this.updateFilm = (film) => {
+    return new Promise((resolve, reject) => {
+      const sql = "UPDATE films SET title = ?, isFavorite = ?, rating = ?, watchDate = ?, userId = ? WHERE id = ?"
+      db.run(sql, [film.title, film.isFavorite, film.rating, film.watchDate, film.userId, film.id], function (err) {
+        if (err) {
+          console.log("errore di aggiornamento del film");
+          reject (err);
+        } else {
+          resolve("film aggiornato correttamente");
+        }
+      });
+    });
+  }
+
   this.deleteFilm = (film) => {
     return new Promise((resolve, reject) => {
       const sql = "DELETE FROM films WHERE films.id = ?";
@@ -145,37 +191,37 @@ function FilmLibrary (text) {
 
 }
 
-const film1 = new Film(6, 'Chi trova un amico trova un tesoro', 1, 4, dayjs('2019-12-27T16:00'), 3);
-const film2 = new Film(7, 'Caccia a Ottobre rosso', 1, 3, dayjs('2023-12-24T11:00'), 4);
-const film3 = new Film(8, '50 sfumature di grigio', 0, 1, dayjs('2022-09-12T16:00'), 1);
-const film4 = new Film(9, 'Interstellar', 1, 5, dayjs('2022-06-29T22:00'), 2);
+// const film1 = new Film(6, 'Chi trova un amico trova un tesoro', 1, 4, dayjs('2019-12-27T16:00'), 3);
+// const film2 = new Film(7, 'Caccia a Ottobre rosso', 1, 3, dayjs('2023-12-24T11:00'), 4);
+// const film3 = new Film(8, '50 sfumature di grigio', 0, 1, dayjs('2022-09-12T16:00'), 1);
+// const film4 = new Film(9, 'Interstellar', 1, 5, dayjs('2022-06-29T22:00'), 2);
 
-const library = new FilmLibrary("Libreria dei film");
+// const library = new FilmLibrary("Libreria dei film");
 
-library.addFilm(film1);
-library.addFilm(film2);
-library.addFilm(film3);
-library.addFilm(film4);
+// library.addFilm(film1);
+// library.addFilm(film2);
+// library.addFilm(film3);
+// library.addFilm(film4);
 
-//library.toString();
-// console.log(library.getAllFilms())
+// //library.toString();
+// // console.log(library.getAllFilms())
 
-async function main() {
-  const library_db = new FilmLibrary("Libreria dei film da database");
+// async function main() {
+//   const library_db = new FilmLibrary("Libreria dei film da database");
   
-  const date = dayjs('2026-03-11')
-  const film_name = '21'
-  const val = null
-  // console.log(await library_db.getAllFilms());
-  // console.log(await library_db.getFavFilms());
-  // console.log(await library_db.getBeforeDateFilms(date));
-  // console.log(await library_db.getNameFilms(film_name));
-  // console.log(await library_db.insertFilm(film2));
-  // console.log(await library_db.deleteFilm(film1));
-  console.log(await library_db.deleteWatchDate(val));
+//   const date = dayjs('2026-03-11')
+//   const film_name = '21'
+//   const val = null
+//   // console.log(await library_db.getAllFilms());
+//   // console.log(await library_db.getFavFilms());
+//   // console.log(await library_db.getBeforeDateFilms(date));
+//   // console.log(await library_db.getNameFilms(film_name));
+//   // console.log(await library_db.insertFilm(film2));
+//   // console.log(await library_db.deleteFilm(film1));
+//   console.log(await library_db.deleteWatchDate(val));
 
-}
+// }
 
-main();
+// main();
 
 
