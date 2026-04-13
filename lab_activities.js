@@ -3,12 +3,12 @@
 import dayjs from "dayjs";
 import sqlite from "sqlite3";
 
-const db = new sqlite.Database("films.db", (err) => {
+const db = new sqlite.Database("films_orig.db", (err) => {
   if (err) throw err;
 })
 
 const filters = {
-    'filter-favorite': {label: 'Favorites', filterFunction: film => film.favorite},
+    'filter-favorite': {label: 'Favorites', filterFunction: film => film.isFavorite === 1},
     'filter-best': {label: 'Best Rated', filterFunction: film => film.rating >= 5},
     'filter-lastmonth': {label: 'Seen Last Month', filterFunction: film => isSeenLastMonth(film)},
     'filter-unseen': {label: 'Unseen', filterFunction: film => !film.watchDate}
@@ -22,13 +22,13 @@ const isSeenLastMonth = (film) => {
     }
 };
 
-export function Film (id, title, fav=0, rating, date, user_id=1) {
+export function Film (id, title, isFavorite=0, rating, watchDate, userId=1) {
   this.id = id;
   this.title = title;
-  this.fav = fav;
+  this.isFavorite = isFavorite;
   this.rating = rating ?? undefined;
-  this.date = dayjs(date) ?? undefined;
-  this.user_id = user_id;
+  this.watchDate = watchDate && dayjs(watchDate);
+  this.userId = userId;
 }
 
 export function FilmLibrary (text) {
@@ -56,12 +56,11 @@ export function FilmLibrary (text) {
   this.getAllFilms = (filter) => {
     return new Promise((resolve, reject) => {
       const sql = "SELECT films.* from films";
-      const films = [];
       db.all(sql, (err, rows) => {
         if (err) {
           reject(err);
         } else {
-          films.push(rows);
+          const films = rows.map((row) => new Film(row.id, row.title, row.isFavorite, row.rating, row.watchDate, row.userId));
 
           if (filters.hasOwnProperty(filter)) {
             resolve(films.filter(filters[filter].filterFunction))
@@ -81,7 +80,7 @@ export function FilmLibrary (text) {
         if (err) {
           reject(err);
         } else {
-          films.push(rows);
+          films.push(...rows);
           resolve(films);
         }
       });
@@ -96,7 +95,7 @@ export function FilmLibrary (text) {
         if (err) {
           reject(err);
         } else {
-          films.push(rows);
+          films.push(...rows);
           resolve(films);
         }
       });
@@ -111,7 +110,7 @@ export function FilmLibrary (text) {
         if (err) {
           reject(err);
         } else {
-          films.push(rows);
+          films.push(...rows);
           resolve(films);
         }
       });
@@ -126,7 +125,7 @@ export function FilmLibrary (text) {
         if (err) {
           reject(err);
         } else {
-          films.push(rows);
+          films.push(...rows);
           resolve(films);
         }
       });

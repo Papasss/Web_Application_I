@@ -8,6 +8,8 @@ import { check, validationResult } from "express-validator";
 const app = express();
 const port = 3001;
 
+const papaLibrary = new FilmLibrary("My Film Library");
+
 // middlewares
 app.use(morgan('dev'));
 app.use(express.json());
@@ -15,16 +17,17 @@ app.use(express.json());
 
 // GET /api/films
 app.get("/api/films", (req, res) => {
-  FilmLibrary.getAllFilms(req.params.filter)
+  papaLibrary.getAllFilms(req.query.filter)
     .then(films => res.json(films))
-    .catch(() => res.status(500).end());
+    .catch((err) => res.status(500).json(err).end());
 });
 
 
 // GET /api/films/<id>
 app.get("/api/films/:id", async (req, res) => {
   try {
-    const question = await getIdFilms(req.params.id);
+    const id = req.params.id.toString();
+    const question = await papaLibrary.getIdFilms(id);
     if(question.error) {
       res.status(404).json(question);
     }
@@ -50,10 +53,10 @@ app.post("/api/films/", [
     return res.status(404).json({errors: errors.array()});
   }
 
-  const film = req.body;
+  const film = new Film(req.body);
 
   try {
-    const id = await insertFilm(film);
+    const id = await papaLibrary.insertFilm(film);
     res.status(201).location(id).end();
   } catch(e) {
     console.error(`ERROR: ${e.message}`);
@@ -76,38 +79,71 @@ app.put("/api/films/:id", [
     return res.status(422).json({errors: errors.array()});
   }
 
-  const film = req.body;
+  const film = new Film(req.body);
   film.id = req.params.id;
 
   try {
-    await updateFilm(film);
+    await papaLibrary.updateFilm(film);
     res.status(200).end();
   } catch {
     res.status(503).json({"error": `Impossible to update film #${req.params.id}.`});
   }
 });
 
-// POST /api/answers/<id>/vote
-app.post("/api/answers/:id/vote", [
-  check("vote").notEmpty()
+
+// PUT /api/films/<id>/favorite
+app.put("/api/films/:id/favorite", [
+  check("isFavorite").isNumeric()
 ], async (req, res) => {
   const errors = validationResult(req);
-  if(!errors.isEmpty()) {
-    res.status(422).json({errors: errors.array()});
+  if (!errors.isEmpty()) {
+    return res.status(422).json({errors: errors.array()});
   }
 
-  const answerId = req.params.id;
   try {
-    const num = await voteAnswer(answerId, req.body.vote);
-    if(num === 1)
-      res.status(204).end();
-    else
-      throw new Error(`Error in casting a vote for answer #${answerId}`);
+    const film = await papaLibrary.getFilm(req.params.id);
+    if (film.error)
+      return res.status(404).json(film);
+    film.favorite = req.body.favorite;
+    await papaLibrary.updateFilm(film);
+    res.status(200).end();
+  } catch {
+    res.status(503).json({"error": `Impossible to update film #${req.params.id}.`});
   }
-  catch(e) {
-    res.status(503).json({error: e.message});
+});
+
+
+// PUT /api/films/<id>/rating
+app.put("/api/films/:id/rating", [
+  check("rating").isNumeric()
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({errors: errors.array()});
   }
-})
+
+  try {
+    const film = await getFilm(req.params.id);
+    if (film.error)
+      return res.status(404).json(film);
+    film.rating = req.body.rating;
+    await papaLibrary.updateFilm(film);
+    res.status(200).end();
+  } catch {
+    res.status(503).json({"error": `Impossible to update film #${req.params.id}.`});
+  }
+});
+
+
+// DELETE /api/films/<id>
+app.delete('/api/films/:id', async (req, res) => {
+  try {
+    await papaLibrary.deleteFilm(req.params.id);
+    res.status(200).end();
+  } catch (err) {
+    res.status(503).json({error: `Database error during the deletion of film ${req.params.id}: ${err} `});
+  }
+});
 
 
 // start the server
