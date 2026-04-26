@@ -4,6 +4,9 @@ import express from "express";
 import morgan from "morgan";
 import {Film, FilmLibrary} from "./lab_activities.js";
 import { check, validationResult } from "express-validator";
+import passport from 'passport';
+import LocalStrategy from 'passport-local';
+import session from 'express-session';
 
 const app = express();
 const port = 3001;
@@ -13,6 +16,36 @@ const papaLibrary = new FilmLibrary("My Film Library");
 // middlewares
 app.use(morgan('dev'));
 app.use(express.json());
+
+passport.use(new LocalStrategy(async function verify(username, password, cb) {
+  const user = await getUser(username, password);
+  if(!user)
+    return cb(null, false, "Incorrect username or password.");
+    
+  return cb(null, user);
+}));
+
+passport.serializeUser(function (user, cb) {
+  cb(null, {id: user.id, email: user.email, name: user.name});
+});
+
+passport.deserializeUser(function (user, cb) {
+  return cb(null, user);
+});
+
+const isLoggedIn = (req, res, next) => {
+  if(req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({error: "Not authorized"});
+}
+
+app.use(session({
+  secret: "PippoBianco001",
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(passport.authenticate("session"));
 
 
 // GET /api/films

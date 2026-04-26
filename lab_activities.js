@@ -2,6 +2,7 @@
 
 import dayjs from "dayjs";
 import sqlite from "sqlite3";
+import crypto from "crypto";
 
 const db = new sqlite.Database("films_orig.db", (err) => {
   if (err) throw err;
@@ -189,6 +190,35 @@ export function FilmLibrary (text) {
   }
 
 }
+
+export const getUser = (email, password) => {
+  return new Promise((resolve, reject) => {
+    const sql = "SELECT * FROM user WHERE email = ?";
+    db.get(sql, [email], (err, row) => {
+      if (err) { 
+        reject(err); 
+      }
+      else if (row === undefined) { 
+        resolve(false); 
+      }
+      else {
+        const user = {id: row.id, username: row.email, name: row.name};
+        
+        crypto.scrypt(password, row.salt, 16, function(err, hashedPassword) {
+          if (err) reject(err);
+          if(!crypto.timingSafeEqual(Buffer.from(row.password, "hex"), hashedPassword))
+            resolve(false);
+          else
+            resolve(user);
+        });
+      }
+    });
+  });
+};
+
+
+
+// TESTING PURPOSES
 
 // const film1 = new Film(6, 'Chi trova un amico trova un tesoro', 1, 4, dayjs('2019-12-27T16:00'), 3);
 // const film2 = new Film(7, 'Caccia a Ottobre rosso', 1, 3, dayjs('2023-12-24T11:00'), 4);

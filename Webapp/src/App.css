@@ -1,0 +1,10 @@
+.app-container {
+  display: flex;
+  flex-direction: column; /* Header sopra, il resto sotto */
+  height: 100vh;
+}
+
+.main-content {
+  display: flex; /* Mette Filters e FilmLibrary affiancati */
+  flex: 1; /* Occupa tutto lo spazio rimanente sotto l'header */
+}
